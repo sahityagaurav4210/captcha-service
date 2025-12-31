@@ -1,0 +1,1 @@
+export type {ApiReply} from './api.interface'

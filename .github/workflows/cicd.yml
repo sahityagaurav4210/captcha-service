@@ -1,0 +1,69 @@
+name: captcha-service-backend ci/cd pipeline
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setting up
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Installing global dependencies
+        run: npm install -g yarn
+
+      - name: Installing dependencies
+        run: yarn install
+
+      - name: Building
+        run: yarn run build
+
+      - name: Quality gate analysis
+        env:
+          SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_SECRET }}
+          SONAR_HOST_URL: ${{ vars.SONARQUBE_HOST }}
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.host.url=${SONAR_HOST_URL}
+            -Dsonar.token=${SONARQUBE_TOKEN}
+            -Dsonar.qualitygate.wait=true
+
+      - name: Preparing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          docker build -t captcha-service-backend .
+          docker tag captcha-service-backend ${DOCKER_USERNAME}/captcha-service-backend:latest
+
+      - name: Publishing
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_SECRET }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+          docker push ${DOCKER_USERNAME}/captcha-service-backend:latest
+
+      - name: Deploying
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          npm install -g caprover
+          caprover deploy \
+          --host ${{ secrets.CAPROVER_HOST }} \
+          -p ${{ secrets.CAPROVER_PWD }} \
+          --imageName ${{ secrets.DOCKER_USERNAME }}/captcha-service-backend:latest \
+          --appName captcha-service-backend
