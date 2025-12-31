@@ -5,8 +5,7 @@ COPY package.json .
 COPY yarn.lock .
 COPY tsconfig.json .
 
-RUN npm install -g yarn && \
-  yarn install
+RUN yarn install
 
 COPY . .
 RUN yarn run build
