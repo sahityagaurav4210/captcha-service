@@ -60,6 +60,12 @@ jobs:
 
       - name: Deploying
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Running deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           npm install -g caprover
           caprover deploy \
