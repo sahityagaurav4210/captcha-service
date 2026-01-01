@@ -3,6 +3,7 @@ import { FileHelpers } from '../helpers';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from 'src/app.module';
 import { AppConfigurer, SwaggerConfig } from 'src/config';
+import { AppGlobalEvents } from './events';
 
 class CaptchaServiceApplication {
   public static async initialize(): Promise<void> {
@@ -18,19 +19,26 @@ class CaptchaServiceApplication {
     if (!(await FileHelpers.ifFileExists(infoBannerPath))) await FileHelpers.writeFile(infoBannerPath, text);
 
     const app = AppConfigurer.configure(await NestFactory.create(AppModule));
+
+    AppGlobalEvents.initialize();
     SwaggerConfig.configure(app);
 
     const PORT = AppConfigurer.getPort();
     const HOST = AppConfigurer.getHost();
     const VERSION = AppConfigurer.getVersion();
-    const message = `Captcha Service is running on http://${HOST}:${PORT} in ${AppConfigurer.getEnvironment()} mode. 🚀🚀🚀🚀`;
+
+    const APP_EXT_HOST = process.env.APP_EXT_HOST;
+    const testUrl = AppConfigurer.isProduction()
+      ? `https://${APP_EXT_HOST}/api/v1/app/ping`
+      : `http://${APP_EXT_HOST}:${PORT}/api/v1/app/ping`;
+    const message = `Captcha service is running 🚀🚀🚀🚀, and is live at ${testUrl}`;
 
     await app.listen(PORT, HOST);
 
     // eslint-disable-next-line no-console
     console.clear();
     console.log(banner);
-    console.log(`© 2025, Gaurav Sahitya | v${VERSION}`);
+    console.log(`© 2026, Gaurav Sahitya | v${VERSION}`);
     console.log('A product of Coding Works, visit www.sgaurav.me');
     console.log(message);
   }

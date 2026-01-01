@@ -9,10 +9,20 @@ import {
   SWAGGER_AUTHOR_NAME,
   SWAGGER_AUTHOR_URL,
 } from 'src/packages';
+import { AppConfigurer } from './app.config';
+import { ServerObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 
 export class SwaggerConfig {
   public static configure(app: INestApplication): void {
-    const PORT = process.env.PORT || '3000';
+    const PORT = process.env.PORT || 3000;
+    const HOST = process.env.APP_EXT_HOST || 'localhost';
+    const servers = [] as ServerObject[];
+
+    if (AppConfigurer.isProduction()) {
+      servers.push({ url: `https://${HOST}`, description: 'Production Server' });
+    } else {
+      servers.push({ url: `http://localhost:${PORT}`, description: 'Local Development Server' });
+    }
 
     const config = new DocumentBuilder()
       .setTitle(SWAGGER_APP_TITLE)
@@ -23,7 +33,7 @@ export class SwaggerConfig {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    document.servers = [{ url: `http://localhost:${PORT}`, description: 'Local Development Server' }];
+    document.servers = servers;
 
     SwaggerModule.setup(SWAGGER_API_DOC_URL, app, document, {
       customSiteTitle: 'Coding Works || Captcha Service',
