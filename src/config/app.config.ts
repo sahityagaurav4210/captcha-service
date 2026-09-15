@@ -6,10 +6,12 @@ import { GlobalInterceptor } from 'src/packages';
 class AppConfigurer {
   public static configure(app: INestApplication): INestApplication {
     app.enableCors({ origin: '*' });
+
     app.use((request: Request, response: Response, next: NextFunction) => {
       request.app.set('trust proxy', true);
       next();
     });
+
     app.useGlobalInterceptors(new GlobalInterceptor());
     app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
