@@ -4,5 +4,6 @@
   \___/_/ \_\_|   |_| \___|_||_/_/ \_\ |___/___|_|_\ \_/ |___\___|___|
 
 
-© 2025, Gaurav Sahitya | v0.0.1
+© 2025-2026, Gaurav Sahitya | v0.0.1
 A product of Coding Works, visit www.sgaurav.me
+Design, Developed and Maintained by Gaurav Sahitya

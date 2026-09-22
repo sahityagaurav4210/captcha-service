@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule, ServerObject } from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
   SWAGGER_API_DOC_URL,
   SWAGGER_APP_DESCRIPTION,
@@ -10,6 +10,7 @@ import {
   SWAGGER_AUTHOR_URL,
 } from 'src/packages';
 import { AppConfigurer } from './app.config';
+import { ServerObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 
 export class SwaggerConfig {
   public static configure(app: INestApplication): void {

@@ -35,6 +35,7 @@ export class CaptchaService {
       ip: ipAddress,
       origin: 'CaptchaService::generateCaptcha',
     });
+
     return { data: { uri: `/captcha/image/${captchaId}`, captchaId } };
   }
 
@@ -99,5 +100,111 @@ export class CaptchaService {
 
     response.setHeader('Content-Type', 'audio/mpeg');
     this.captchaAudioClient.stream(spaced).pipe(response);
+  }
+
+  public async validateCaptcha(
+    ipAddress: string,
+    validateCaptchaRequest: Record<string, any>,
+  ): Promise<IServiceReply<Record<string, string>>> {
+    const reply = new ApiClient();
+    const { captchaId, captcha } = validateCaptchaRequest || {};
+
+    if (!captchaId || !captcha) {
+      this.logger.log('Someone hit the captcha validate resouce with invalid payload', {
+        ip: ipAddress,
+        origin: 'CaptchaService::validateCaptcha',
+      });
+
+      reply.STATUS = ApiStatus.VALIDATION;
+      reply.MESSAGE = 'Api operation has failed';
+      reply.DETAILS = { message: 'cs-vc-bad-req-01' };
+      reply.CLIENT_INFO = ipAddress;
+
+      throw new HttpException(reply, HttpStatus.BAD_REQUEST);
+    }
+
+    const cachedKey = `captcha_service:captcha:${captchaId}`;
+    const timeout = Number(process.env.CAPTCHA_TIMEOUT) * 60;
+    const cachedCaptchaDetails = await this.redisClient.get(cachedKey);
+
+    if (!cachedCaptchaDetails) {
+      this.logger.log('Someone has hit the captcha validate resouce with either invalid captcha id or expired captcha id', {
+        ip: ipAddress,
+        origin: 'CaptchaService::validateCaptcha',
+      });
+
+      reply.STATUS = ApiStatus.ERROR;
+      reply.MESSAGE = 'Api operation has failed';
+      reply.DETAILS = { message: 'cs-vc-bad-req-02' };
+      reply.CLIENT_INFO = ipAddress;
+
+      throw new HttpException(reply, HttpStatus.BAD_REQUEST);
+    }
+
+    const { token, data } = JSON.parse(cachedCaptchaDetails);
+    const decryptedCaptchaText = await CryptoHelper.decrypt(token);
+
+    if (decryptedCaptchaText !== captcha) {
+      this.logger.error('User has provided the invalid captcha, please provide a valid captcha.', {
+        ip: ipAddress,
+        captcha,
+        origin: 'CaptchaService::validateCaptcha',
+      });
+
+      reply.STATUS = ApiStatus.ERROR;
+      reply.MESSAGE = 'Api operation has failed';
+      reply.DETAILS = { message: 'cs-vc-bad-req-03' };
+      reply.CLIENT_INFO = ipAddress;
+
+      throw new HttpException(reply, HttpStatus.BAD_REQUEST);
+    }
+
+    this.logger.log('Captcha validated successfully', {
+      ip: ipAddress,
+      captcha,
+      captchaId,
+      origin: 'CaptchaService::validateCaptcha',
+    });
+
+    const payload = JSON.stringify({ token, data, verified: true });
+    await this.redisClient.del(cachedKey);
+    await this.redisClient.setex(cachedKey, timeout, payload);
+
+    return { data: { message: 'cs-vc-ok-01' } };
+  }
+
+  public async getCaptchaVerificationStatus(
+    ipAddress: string,
+    captchaId: number,
+  ): Promise<IServiceReply<Record<string, any>>> {
+    const reply = new ApiClient();
+    const cachedKey = `captcha_service:captcha:${captchaId}`;
+    const cachedCaptchaDetails = await this.redisClient.get(cachedKey);
+
+    if (captchaId === Number.MIN_SAFE_INTEGER) {
+      reply.STATUS = ApiStatus.VALIDATION;
+      reply.MESSAGE = 'Api operation failed';
+      reply.CLIENT_INFO = ipAddress;
+      reply.DETAILS = { message: 'cs-gcvs-bad-req-01' };
+
+      throw new HttpException(reply, HttpStatus.BAD_REQUEST);
+    }
+
+    if (!cachedCaptchaDetails) {
+      this.logger.error(
+        'Someone has hit the captcha verification resource with either invalid captcha id or expired captcha id',
+        { ip: ipAddress, captchaId, origin: 'CaptchaService::getCaptchaVerificationStatus' },
+      );
+
+      reply.STATUS = ApiStatus.ERROR;
+      reply.MESSAGE = 'Api operation was failed';
+      reply.DETAILS = { message: 'cs-gcvs-bad-req-02' };
+      reply.CLIENT_INFO = ipAddress;
+
+      throw new HttpException(reply, HttpStatus.OK);
+    }
+
+    const { verified } = JSON.parse(cachedCaptchaDetails);
+    return { data: { status: verified } };
   }
 }
