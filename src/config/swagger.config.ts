@@ -38,8 +38,8 @@ export class SwaggerConfig {
     SwaggerModule.setup(SWAGGER_API_DOC_URL, app, document, {
       customSiteTitle: 'Coding Works || Captcha Service',
       explorer: true,
-      jsonDocumentUrl:`${SWAGGER_API_DOC_URL}/json`,
-      yamlDocumentUrl:`${SWAGGER_API_DOC_URL}/yaml`
+      jsonDocumentUrl: `${SWAGGER_API_DOC_URL}/json`,
+      yamlDocumentUrl: `${SWAGGER_API_DOC_URL}/yaml`,
     });
   }
 }
