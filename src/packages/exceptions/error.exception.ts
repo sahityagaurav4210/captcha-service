@@ -3,8 +3,9 @@ import { Request, Response } from 'express';
 import ApiClient from 'src/api/app.api';
 import { ApiStatus } from '../constants/api.constants';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { AppException } from './app.exception';
 
-@Catch()
+@Catch(AppException)
 export class GeneralException implements ExceptionFilter {
   constructor(@Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: Logger) {}
 
@@ -14,13 +15,12 @@ export class GeneralException implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const reply = new ApiClient();
 
-    const res = exception.getResponse ? exception.getResponse() : {};
-    const message = exception?.message || 'An error occurred';
-    const httpCode = res?.errorObject?.HTTP_CODE || HttpStatus.INTERNAL_SERVER_ERROR;
+    const message = exception?.errorObject?.details?.message || 'An error occurred';
+    const httpCode = exception?.errorObject?.HTTP_CODE || HttpStatus.INTERNAL_SERVER_ERROR;
 
-    reply.STATUS = res?.errorObject?.STATUS || ApiStatus.EXCEPTION;
+    reply.STATUS = exception?.errorObject?.STATUS || ApiStatus.EXCEPTION;
     reply.MESSAGE = 'Api operation failed';
-    reply.DETAILS = res?.DETAILS || { message };
+    reply.DETAILS = exception?.DETAILS || { message };
     reply.CLIENT_INFO = request.ip || '0.0.0.0';
 
     this.logger.error(`General Exception: ${message}`, {

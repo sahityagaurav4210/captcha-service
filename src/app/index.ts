@@ -29,8 +29,8 @@ class CaptchaServiceApplication {
 
     const APP_EXT_HOST = process.env.APP_EXT_HOST;
     const testUrl = AppConfigurer.isProduction()
-      ? `https://${APP_EXT_HOST}/api/v1/app/ping`
-      : `http://${APP_EXT_HOST}:${PORT}/api/v1/app/ping`;
+      ? `https://${APP_EXT_HOST}`
+      : `http://${APP_EXT_HOST}:${PORT}`;
     const message = `Captcha service is running 🚀🚀🚀🚀, and is live at ${testUrl}`;
 
     await app.listen(PORT, HOST);

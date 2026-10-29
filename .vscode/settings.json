@@ -8,5 +8,7 @@
     "editor.formatOnSave": true,
     "editor.tabSize": 2,
     "editor.wordWrap": "wordWrapColumn",
-    "editor.wordWrapColumn": 125
+    "editor.wordWrapColumn": 125,
+    "editor.fontFamily": "'Fira Code',Consolas, 'Courier New', monospace",
+    "editor.fontSize": 16
 }

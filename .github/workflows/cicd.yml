@@ -21,14 +21,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Installing global dependencies
-        run: npm install -g yarn
-
       - name: Installing dependencies
-        run: yarn install
+        run: npm install
 
       - name: Building
-        run: yarn run build
+        run: npm run build
 
       - name: Quality gate analysis
         env:
