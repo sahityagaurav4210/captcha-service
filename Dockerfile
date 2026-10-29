@@ -1,8 +1,7 @@
 FROM node:24-alpine
 
 WORKDIR /apps
-COPY package.json .
-COPY yarn.lock .
+COPY package-*.json .
 COPY tsconfig.json .
 
 COPY . .
