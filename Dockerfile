@@ -1,19 +1,19 @@
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /apps
 COPY package.json .
 COPY yarn.lock .
 COPY tsconfig.json .
 
-RUN yarn install
-
 COPY . .
-RUN yarn run build
+RUN npm run build \
+  && rm -rf src tsconfig.json scripts .vscode .gitignore .dockerignore .prettierrc README.md \
+  && chown -R node:node /apps
 
-RUN rm -rf src tsconfig.json scripts .vscode .gitignore .dockerignore .prettierrc README.md
+USER node
 
 ARG PORT=11906
 ENV PORT=${PORT}
 
 EXPOSE ${PORT}
-CMD [ "yarn","run","start:prod" ]
+CMD [ "npm","run","start:prod" ]
