@@ -5,7 +5,7 @@ COPY package-*.json .
 COPY tsconfig.json .
 
 COPY . .
-RUN npm install --production \
+RUN npm install \
   && npm run build \
   && rm -rf src tsconfig.json scripts .vscode .gitignore .dockerignore .prettierrc README.md \
   && chown -R node:node /apps
